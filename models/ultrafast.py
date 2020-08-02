@@ -91,10 +91,11 @@ class UltraFastNet(tf.keras.Model):
             tf.keras.layers.Dense(2048, input_shape=(1800,)),
             tf.keras.layers.ReLU(),
             tf.keras.layers.Dense(self.total_dim, input_shape=(2048,)),
-            tf.keras.layers.Softmax(axis=1)
         ], name='cls')
         
         self.pool = tf.keras.layers.Conv2D(8, 1, input_shape=(512,), name='pool')
+        
+        self.sm = tf.keras.layers.Softmax(axis=1)
         
         self.build((None, self.h, self.w, 3))
 
@@ -118,8 +119,10 @@ class UltraFastNet(tf.keras.Model):
         fea = tf.reshape(self.pool(fea), (-1, 1800))
 
         group_cls = tf.reshape(self.cls(fea), (-1, *self.cls_dim))
+        
+        group_cls_sm = self.sm(group_cls)
 
         if self.use_aux:
-            return group_cls, aux_seg
+            return group_cls_sm, aux_seg
 
-        return group_cls
+        return group_cls_sm
