@@ -91,11 +91,12 @@ class UltraFastNet(tf.keras.Model):
             tf.keras.layers.Dense(2048, input_shape=(1800,)),
             tf.keras.layers.ReLU(),
             tf.keras.layers.Dense(self.total_dim, input_shape=(2048,)),
+            tf.keras.layers.Softmax(axis=1)
         ], name='cls')
         
         self.pool = tf.keras.layers.Conv2D(8, 1, input_shape=(512,), name='pool')
         
-        self.build((None, self.h, self.h, 3))
+        self.build((None, self.h, self.w, 3))
 
     def call(self, inputs, training=None, mask=None):
         # n c h w - > n 2048 sh sw
