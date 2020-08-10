@@ -4,9 +4,12 @@ import models.resnet as resnet
 
 
 class Backbone(tf.keras.layers.Layer):
-    def __init__(self):
+    def __init__(self, weights=None):
         super(Backbone, self).__init__()
         model = resnet.resnet_18()
+        model.build(input_shape=(None, 256,256,3))
+        if weights is not None:
+            model.load_weights(weights)
         
         self.conv1 = model.conv1
         self.bn1 = model.bn1
@@ -15,6 +18,23 @@ class Backbone(tf.keras.layers.Layer):
         self.layer2 = model.layer2
         self.layer3 = model.layer3
         self.layer4 = model.layer4
+        
+        if False:
+            self.conv1.trainable = False
+            self.bn1.trainable = False
+            self.pool1.trainable = False
+            
+            for layer in self.layer1.layers:
+                layer.trainable = False
+            
+            for layer in self.layer2.layers:
+                layer.trainable = False
+                
+            for layer in self.layer3.layers:
+                layer.trainable = False
+                
+            for layer in self.layer4.layers:
+                layer.trainable = False
         
     def call(self, inputs, training=None, **kwargs):
         x = self.conv1(inputs)
@@ -50,7 +70,7 @@ class ConvBnRelu(tf.keras.layers.Layer):
 
 
 class UltraFastNet(tf.keras.Model):
-    def __init__(self, num_lanes=4, size=(288, 800), cls_dim=(37, 10, 4), use_aux=False):
+    def __init__(self, num_lanes=4, size=(288, 800), cls_dim=(37, 10, 4), use_aux=False, resnet_weights=None):
         super(UltraFastNet, self).__init__()
         
         self.num_lanes = num_lanes
@@ -61,7 +81,7 @@ class UltraFastNet(tf.keras.Model):
         self.use_aux = use_aux
         self.total_dim = np.prod(cls_dim)
 
-        self.backbone = Backbone()
+        self.backbone = Backbone(weights=resnet_weights)
         
         if self.use_aux:
             self.aux_header2 = tf.keras.Sequential([
